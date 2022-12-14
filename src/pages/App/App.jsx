@@ -1,28 +1,48 @@
 import { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { getUser } from '../../utilities/users-service';
-import './App.css';
+import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import * as userService from '../../utilities/users-service';
+import * as notesAPI from '../../utilities/notes-api';
 import AuthPage from '../AuthPage/AuthPage';
-// import NewOrderPage from '../NewOrderPage/NewOrderPage';
-// import OrderHistoryPage from '../OrderHistoryPage/OrderHistoryPage';
-import NavBar from '../../components/NavBar/NavBar';
-import MyNotesList from '../MyNotesList/MyNotesList';
+import CreateNoteForm from '../../components/CreateNoteForm/CreateNoteForm';
+import Notes from '../../components/Notes/Notes';
+import './App.css';
 
 export default function App() {
   const [user, setUser] = useState(getUser());
-  const [notes, setNotes] = useState([]);
+  const [notes, setNotes] = useState({});
+
+  useEffect(function () {
+    async function getAll() {
+      const allNotes = await notesAPI.getAll();
+      setNotes(allNotes);
+    };
+    getAll();
+  }, [])
+  
+  function handleLogOut() {
+    userService.logOut();
+    setUser(null);
+  }
+
+  async function handleAddNote(evt, newNote) {
+    evt.preventDefault();
+    const note = await notesAPI.addNote(newNote);
+    setNotes([...notes, note]);
+  }
 
   return (
     <main className="App">
       { user ?
           <>
-            <NavBar user={user} setUser={setUser} />
-            <Routes>
-              <Route path="/notes" element={<MyNotesList notes={notes} setNotes={setNotes} />} />
-            </Routes>
+            <Link to="" onClick={handleLogOut}>Log Out</Link>
+            <CreateNoteForm handleAddNote={handleAddNote} />
+            <Notes notes={notes}  setNotes={setNotes}/>
           </>
           :
-          <AuthPage setUser={setUser} />
+          <AuthPage setUser={setUser} /> 
       }
     </main>
   );
